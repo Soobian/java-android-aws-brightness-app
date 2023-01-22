@@ -1,30 +1,32 @@
-package com.example.brightnessapp.ui.slideshow;
+package com.example.brightnessapp.ui.devices;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.brightnessapp.databinding.FragmentSlideshowBinding;
+import com.example.brightnessapp.R;
+import com.example.brightnessapp.databinding.DevicesSlideshowBinding;
 
-public class SlideshowFragment extends Fragment {
+public class DevicesFragment extends Fragment {
 
-    private FragmentSlideshowBinding binding;
+    private DevicesSlideshowBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        SlideshowViewModel slideshowViewModel =
-                new ViewModelProvider(this).get(SlideshowViewModel.class);
+        DevicesViewModel slideshowViewModel =
+                new ViewModelProvider(this).get(DevicesViewModel.class);
 
-        binding = FragmentSlideshowBinding.inflate(inflater, container, false);
+        binding = DevicesSlideshowBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textSlideshow;
+        final TextView textView = binding.textView;
         slideshowViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }

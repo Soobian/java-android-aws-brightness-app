@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/nav_slideshow"
-        android:name="com.example.brightnessapp.ui.slideshow.SlideshowFragment"
+        android:name="com.example.brightnessapp.ui.devices.DevicesFragment"
         android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        tools:layout="@layout/devices_slideshow" />
 </navigation>
