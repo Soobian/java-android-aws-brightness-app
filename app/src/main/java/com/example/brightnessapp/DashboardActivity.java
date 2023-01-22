@@ -62,7 +62,6 @@ import java.util.Map;
 import java.util.UUID;
 
 
-
 public class DashboardActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -172,14 +171,13 @@ public class DashboardActivity extends AppCompatActivity
 
         Map<String, String> logins = new HashMap<String, String>();
 
-       AuthenticationHandler authenticationHandler = new AuthenticationHandler() {
-
+        AuthenticationHandler authenticationHandler = new AuthenticationHandler() {
 
 
             @Override
             public void onSuccess(CognitoUserSession userSession, CognitoDevice newDevice) {
                 String ids = userSession.getIdToken().getJWTToken();
-                Log.d("MyToken","session id___"+userSession.getIdToken().getExpiration()+"___"+userSession.getIdToken().getIssuedAt());
+                Log.d("MyToken", "session id___" + userSession.getIdToken().getExpiration() + "___" + userSession.getIdToken().getIssuedAt());
                 String idToken = userSession.getIdToken().getJWTToken();
                 logins.put("cognito-idp:eu-central-1:004319199759:userpool/eu-central-1_zhw75TjiC", idToken);
 
@@ -192,7 +190,7 @@ public class DashboardActivity extends AppCompatActivity
 
             @Override
             public void getAuthenticationDetails(AuthenticationContinuation authenticationContinuation, String userId) {
-                Log.d("MyToken","getAuthenticationDetails");
+                Log.d("MyToken", "getAuthenticationDetails");
                 AuthenticationDetails authenticationDetails = new AuthenticationDetails("bf420", "Bartek951753!", null);
                 authenticationContinuation.setAuthenticationDetails(authenticationDetails);
                 // Allow the sign-in to continue
@@ -201,19 +199,19 @@ public class DashboardActivity extends AppCompatActivity
 
             @Override
             public void getMFACode(MultiFactorAuthenticationContinuation multiFactorAuthenticationContinuation) {
-                Log.d("MyToken","getMFACode");
+                Log.d("MyToken", "getMFACode");
                 multiFactorAuthenticationContinuation.continueTask();
             }
 
             @Override
             public void authenticationChallenge(ChallengeContinuation continuation) {
-                Log.d("MyToken","authenticationChallenge"+continuation.getChallengeName());
+                Log.d("MyToken", "authenticationChallenge" + continuation.getChallengeName());
             }
 
             @Override
             public void onFailure(Exception exception) {
                 exception.printStackTrace();
-                Log.d("MyToken","onFailure");
+                Log.d("MyToken", "onFailure");
             }
         };
         cogUser.getSessionInBackground(authenticationHandler);
@@ -235,7 +233,7 @@ public class DashboardActivity extends AppCompatActivity
         cognitoIdentity.setRegion(Region.getRegion(Regions.EU_CENTRAL_1));
         CognitoCachingCredentialsProvider finalCredentialsProvider1 = credentialsProvider;
         Runnable myRunnable = () -> {
-            GetIdRequest getIdReq =new  GetIdRequest();
+            GetIdRequest getIdReq = new GetIdRequest();
             getIdReq.setLogins(finalCredentialsProvider1.getLogins()); //or if you have already set provider logins just use credentialsProvider.getLogins()
             getIdReq.setIdentityPoolId("eu-central-1:d9a075f8-2b1a-406e-8a6c-943cd1c14af2");
             GetIdResult getIdRes = cognitoIdentity.getId(getIdReq);
@@ -308,7 +306,6 @@ public class DashboardActivity extends AppCompatActivity
         clientId = UUID.randomUUID().toString();
 
 
-
 //        AttachPolicyRequest attachPolicyRequest = new AttachPolicyRequest();
 //        attachPolicyRequest.setPolicyName("userPolicy");
 //        attachPolicyRequest.setTarget(credentialsProvider.getIdentityPoolId());
@@ -321,13 +318,12 @@ public class DashboardActivity extends AppCompatActivity
         AWSIotMqttManager manager = new AWSIotMqttManager(clientId, CUSTOMER_SPECIFIC_ENDPOINT);
 
 
-
         manager.connect(credentialsProvider, new AWSIotMqttClientStatusCallback() {
             @Override
             public void onStatusChanged(AWSIotMqttClientStatus status, Throwable throwable) {
                 Log.d("MQTT", "onStatusChanged: " + status);
                 AWSIotMqttQos QoS = AWSIotMqttQos.QOS0;
-                if(status == AWSIotMqttClientStatus.Connected){
+                if (status == AWSIotMqttClientStatus.Connected) {
                     manager.publishData("Byłem tu i może nawet działam!!".getBytes(StandardCharsets.UTF_8), topic, QoS);
 
                 }
