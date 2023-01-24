@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     StartAnimations();
                     sleep(1000);
-                    Intent dashboard = new Intent(getBaseContext(), wifiScanActivity.class);
+                    Intent dashboard = new Intent(getBaseContext(), DashboardActivity.class);
                     startActivity(dashboard);
                     finish();
                 } catch (Exception e) {

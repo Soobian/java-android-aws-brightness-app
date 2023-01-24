@@ -29,6 +29,10 @@ public class HomeFragment extends Fragment {
         return root;
     }
 
+    public void setTextOnTextView(String text) {
+        binding.textHome.setText(text);
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();

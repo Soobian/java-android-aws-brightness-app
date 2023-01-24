@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.telecom.ConnectionRequest;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.amazonaws.ClientConfiguration;
@@ -59,7 +61,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -72,9 +76,9 @@ public class DashboardActivity extends AppCompatActivity
 
     String ipAddress;
     String threshold;
-
     TextView TextBrightness;
     TextView TextToday;
+    TextView mqttTextView;
 
     Handler brightnessMonitorHandler;
     private IotKeyHelper iotKeyHelper;
@@ -303,10 +307,11 @@ public class DashboardActivity extends AppCompatActivity
 
         this.brightnessMonitorHandler = new Handler();
 
-        TextBrightness = (TextView) findViewById(R.id.textBrightness);
+//        TextBrightness = (TextView) findViewById(R.id.textBrightness);
 
         clientId = UUID.randomUUID().toString();
 
+//        mqttTextView = (TextView) findViewById(R.id.textMqtt);
 
 //        AttachPolicyRequest attachPolicyRequest = new AttachPolicyRequest();
 //        attachPolicyRequest.setPolicyName("userPolicy");
@@ -318,28 +323,35 @@ public class DashboardActivity extends AppCompatActivity
 
 
         AWSIotMqttManager manager = new AWSIotMqttManager(clientId, CUSTOMER_SPECIFIC_ENDPOINT);
+        ListView mqqtList = (ListView) findViewById(R.id.mqttList);
+
+        List<String> myList = new ArrayList<>();
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, android.R.id.text1, myList);
+        mqqtList.setAdapter(adapter);
+
+        manager.connect(credentialsProvider, (status, throwable) -> {
+            Log.d("MQTT", "onStatusChanged: " + status);
+            AWSIotMqttQos QoS = AWSIotMqttQos.QOS0;
+            if (status == AWSIotMqttClientStatusCallback.AWSIotMqttClientStatus.Connected) {
+                manager.subscribeToTopic(topic, QoS, new AWSIotMqttNewMessageCallback() {
+                    @Override
+                    public void onMessageArrived(String topic, byte[] data) {
+                        try {
+                            String message = new String(data, "UTF-8");
+//                            setMqttText(message);
+                            myList.add(message);
+                            adapter.notifyDataSetChanged();
 
 
-        manager.connect(credentialsProvider, new AWSIotMqttClientStatusCallback() {
-            @Override
-            public void onStatusChanged(AWSIotMqttClientStatus status, Throwable throwable) {
-                Log.d("MQTT", "onStatusChanged: " + status);
-                AWSIotMqttQos QoS = AWSIotMqttQos.QOS0;
-                if (status == AWSIotMqttClientStatus.Connected) {
-                    manager.subscribeToTopic(topic, QoS, new AWSIotMqttNewMessageCallback() {
-                        @Override
-                        public void onMessageArrived(String topic, byte[] data) {
-                            try {
-                                String message = new String(data, "UTF-8");
-                                Log.d("MQTT", "Message arrived:");
-                                Log.d("MQTT", "   Topic: " + topic);
-                                Log.d("MQTT", " Message: " + message);
-                            } catch (UnsupportedEncodingException e) {
-                                Log.e("MQTT", "Message encoding error.", e);
-                            }
+                            Log.d("MQTT", "Message arrived:");
+                            Log.d("MQTT", "   Topic: " + topic);
+                            Log.d("MQTT", " Message: " + message);
+                        } catch (UnsupportedEncodingException e) {
+                            Log.e("MQTT", "Message encoding error.", e);
                         }
-                    });
-                }
+                    }
+                });
             }
         });
 
@@ -393,6 +405,10 @@ public class DashboardActivity extends AppCompatActivity
 //
 //        KeyStore ks = iotKeyHelper.getAWSIotKeyStore(clientId);
 //        mqttManager.connect(ks, (status, throwable) -> Log.d(LOG_TAG, "Status = " + status));
+    }
+
+    public void setMqttText(String text) {
+        mqttTextView.setText(text);
     }
 
     @Override
