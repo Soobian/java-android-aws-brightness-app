@@ -11,6 +11,7 @@ import com.amazonaws.ClientConfiguration;
 
 import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobile.auth.core.IdentityManager;
 import com.amazonaws.mobile.client.AWSMobileClient;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoDevice;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUser;
@@ -55,11 +56,13 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 
 public class DashboardActivity extends AppCompatActivity
@@ -81,13 +84,12 @@ public class DashboardActivity extends AppCompatActivity
     private static final String COGNITO_POOL_ID = "eu-central-1:d9a075f8-2b1a-406e-8a6c-943cd1c14af2";
     private static final String COGNITO_USER_POOL_ID = "eu-central-1_zhw75TjiC";
     private static final Regions MY_REGION = Regions.EU_CENTRAL_1;
-    private static final String topic = "bright";
+    private static final String topic = "ESP32/pub";
 
     public static String OUT = "";
     public static String BRIGHTNESS = "0.0";
     //    AWSIotMqttManager mqttManager = new AWSIotMqttManager("clientid", CUSTOMER_SPECIFIC_ENDPOINT);
     String clientId;
-    CognitoCachingCredentialsProvider credentialsProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +102,7 @@ public class DashboardActivity extends AppCompatActivity
 
 //        Amplify.Auth.signIn(
 //                "fudalibartek@gmail.com",
-//                "Bartek951753",
+//                "Bartek951753!",
 //                result -> Log.i("AuthQuickstart", result.isSignedIn()? "Sign in succeeded" : "Sign in not complete"),
 //                error -> Log.e("AuthQuickstart", error.toString())
 //        );
@@ -165,11 +167,17 @@ public class DashboardActivity extends AppCompatActivity
         }
         AmazonCognitoIdentityProviderClient identityProviderClient = new
                 AmazonCognitoIdentityProviderClient(new AnonymousAWSCredentials(), new ClientConfiguration());
-        identityProviderClient.setRegion(Region.getRegion(Regions.US_WEST_2));
-        CognitoUserPool userPool = new CognitoUserPool(getApplicationContext(), "us-west-2_ghtcc6ho9", "4t0mk45hNso69dp2j4jvel5ghm", "1jmq0lhhq721oif9k6nug31c29i760vihua8hvrgu5umfr2a1vd7", identityProviderClient);
+//
+        identityProviderClient.setRegion(Region.getRegion(Regions.EU_CENTRAL_1));
+        CognitoUserPool userPool = new CognitoUserPool(getApplicationContext(), "eu-central-1_zhw75TjiC", "j4b48fg4542njbiqj5birp41m", null, identityProviderClient);
         CognitoUser cogUser = userPool.getUser();
+        Map<String, String> logins = new HashMap<>();
 
-        Map<String, String> logins = new HashMap<String, String>();
+        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                getApplicationContext(),
+                "eu-central-1:d9a075f8-2b1a-406e-8a6c-943cd1c14af2", // Identity pool ID
+                Regions.EU_CENTRAL_1 // Region
+        );
 
         AuthenticationHandler authenticationHandler = new AuthenticationHandler() {
 
@@ -177,13 +185,14 @@ public class DashboardActivity extends AppCompatActivity
             @Override
             public void onSuccess(CognitoUserSession userSession, CognitoDevice newDevice) {
                 String ids = userSession.getIdToken().getJWTToken();
-                Log.d("MyToken", "session id___" + userSession.getIdToken().getExpiration() + "___" + userSession.getIdToken().getIssuedAt());
+                Log.d("MyToken", "session id___ " + userSession.getIdToken().getExpiration() + "___" + userSession.getIdToken().getIssuedAt() + "___" + userSession.getIdToken().getJWTToken());
                 String idToken = userSession.getIdToken().getJWTToken();
                 logins.put("cognito-idp:eu-central-1:004319199759:userpool/eu-central-1_zhw75TjiC", idToken);
-
+                credentialsProvider.setLogins(logins);
 //                Intent pubSub = new Intent(MainActivity.this, PubSubActivity.class);
 //                pubSub.putExtra("token",""+ids);
 //                startActivity(pubSub);
+
                 //MainActivity.this.finish();
 
             }
@@ -191,9 +200,9 @@ public class DashboardActivity extends AppCompatActivity
             @Override
             public void getAuthenticationDetails(AuthenticationContinuation authenticationContinuation, String userId) {
                 Log.d("MyToken", "getAuthenticationDetails");
-                AuthenticationDetails authenticationDetails = new AuthenticationDetails("bf420", "Bartek951753!", null);
+                AuthenticationDetails authenticationDetails = new AuthenticationDetails("bf420", "Bartek951753!", logins);
+
                 authenticationContinuation.setAuthenticationDetails(authenticationDetails);
-                // Allow the sign-in to continue
                 authenticationContinuation.continueTask();
             }
 
@@ -214,39 +223,33 @@ public class DashboardActivity extends AppCompatActivity
                 Log.d("MyToken", "onFailure");
             }
         };
-        cogUser.getSessionInBackground(authenticationHandler);
+//        AmazonCognitoIdentity cognitoIdentity = new AmazonCognitoIdentityClient(credentialsProvider);
+//        cognitoIdentity.setRegion(Region.getRegion(Regions.EU_CENTRAL_1));
+//        cogUser.getSession(authenticationHandler);
 
 
-        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                getApplicationContext(),
-                "eu-central-1:d9a075f8-2b1a-406e-8a6c-943cd1c14af2", // Identity pool ID
-                Regions.EU_CENTRAL_1 // Region
-        );
-//        credentialsProvider = new CognitoCachingCredentialsProvider(
-//                getApplicationContext(),
-//                COGNITO_POOL_ID,
-//                MY_REGION
-//        );
-        credentialsProvider.setLogins(logins);
+//        cogUser.getSession(authenticationHandler);
+//        credentialsProvider.setLogins(logins);
+//
+//        GetIdRequest getIdReq = new GetIdRequest();
+//        getIdReq.setLogins(credentialsProvider.getLogins()); //or if you have already set provider logins just use credentialsProvider.getLogins()
+//        getIdReq.setIdentityPoolId("eu-central-1:d9a075f8-2b1a-406e-8a6c-943cd1c14af2");
 
-        AmazonCognitoIdentity cognitoIdentity = new AmazonCognitoIdentityClient(credentialsProvider);
-        cognitoIdentity.setRegion(Region.getRegion(Regions.EU_CENTRAL_1));
-        CognitoCachingCredentialsProvider finalCredentialsProvider1 = credentialsProvider;
-        Runnable myRunnable = () -> {
-            GetIdRequest getIdReq = new GetIdRequest();
-            getIdReq.setLogins(finalCredentialsProvider1.getLogins()); //or if you have already set provider logins just use credentialsProvider.getLogins()
-            getIdReq.setIdentityPoolId("eu-central-1:d9a075f8-2b1a-406e-8a6c-943cd1c14af2");
-            GetIdResult getIdRes = cognitoIdentity.getId(getIdReq);
-            AttachPrincipalPolicyRequest attachPrincipalPolicyRequest = new AttachPrincipalPolicyRequest();
-            attachPrincipalPolicyRequest.setPrincipal("userPool");
-            attachPrincipalPolicyRequest.setPrincipal(getIdRes.getIdentityId());
+//        GetIdResult getIdRes = cognitoIdentity.getId(getIdReq);
+
+//            AttachPrincipalPolicyRequest attachPrincipalPolicyRequest = new AttachPrincipalPolicyRequest();
+//            attachPrincipalPolicyRequest.setPrincipal("userPool");
+//            attachPrincipalPolicyRequest.setPrincipal(getIdRes.getIdentityId());
 //            new AWSIotClient(credentialsProvider).attachPrincipalPolicy(attachPrincipalPolicyRequest);
 
-        };
-        Thread thread = new Thread(myRunnable);
-        thread.start();
+//        AttachPolicyRequest attachPolicyReq = new AttachPolicyRequest();
+//        attachPolicyReq.setPolicyName("myIOTPolicy"); // name of your IoT AWS policy
+////        attachPolicyReq.setTarget(getIdRes.getIdentityId());
+//        AWSIotClient mIotAndroidClient = new AWSIotClient(AWSMobileClient.getInstance());
+//        mIotAndroidClient.setRegion(Region.getRegion(Regions.EU_CENTRAL_1)); // name of your aws region such as "us-east-1"
+//        mIotAndroidClient.attachPolicy(attachPolicyReq);
 
-//        AmazonCognitoIdentity client = new AmazonCognitoIdentityClient(credentialsProvider);
+//       AmazonCognitoIdentity client = new AmazonCognitoIdentityClient(credentialsProvider);
 //        new AWSIotClient(credentialsProvider);
 //        mqttManager.connect(credentialsProvider, new AWSIotMqttClientStatusCallback() {
 //            @Override
@@ -279,7 +282,6 @@ public class DashboardActivity extends AppCompatActivity
                 result -> {
 
                     AWSCognitoAuthSession cognitoAuthSession = (AWSCognitoAuthSession) result;
-
                     switch (cognitoAuthSession.getIdentityIdResult().getType()) {
                         case SUCCESS:
                             Log.i("AuthQuickStart", "IdentityId: " + cognitoAuthSession.getIdentityIdResult().getValue());
@@ -324,8 +326,19 @@ public class DashboardActivity extends AppCompatActivity
                 Log.d("MQTT", "onStatusChanged: " + status);
                 AWSIotMqttQos QoS = AWSIotMqttQos.QOS0;
                 if (status == AWSIotMqttClientStatus.Connected) {
-                    manager.publishData("Byłem tu i może nawet działam!!".getBytes(StandardCharsets.UTF_8), topic, QoS);
-
+                    manager.subscribeToTopic(topic, QoS, new AWSIotMqttNewMessageCallback() {
+                        @Override
+                        public void onMessageArrived(String topic, byte[] data) {
+                            try {
+                                String message = new String(data, "UTF-8");
+                                Log.d("MQTT", "Message arrived:");
+                                Log.d("MQTT", "   Topic: " + topic);
+                                Log.d("MQTT", " Message: " + message);
+                            } catch (UnsupportedEncodingException e) {
+                                Log.e("MQTT", "Message encoding error.", e);
+                            }
+                        }
+                    });
                 }
             }
         });

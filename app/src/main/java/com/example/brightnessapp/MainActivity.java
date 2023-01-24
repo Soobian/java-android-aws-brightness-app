@@ -6,6 +6,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.Window;
@@ -16,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.internal.keyvaluestore.AWSKeyValueStore;
 import com.amazonaws.mobile.client.AWSMobileClient;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -39,7 +41,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Add this line, to include the Auth plugin.
+
+        int SDK_INT = android.os.Build.VERSION.SDK_INT;
+        if (SDK_INT > 8)
+        {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
         try {
             Amplify.addPlugin(new AWSCognitoAuthPlugin());
             Amplify.configure(getApplicationContext());
@@ -93,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     StartAnimations();
                     sleep(1000);
-                    Intent dashboard = new Intent(getBaseContext(), DashboardActivity.class);
+                    Intent dashboard = new Intent(getBaseContext(), wifiScanActivity.class);
                     startActivity(dashboard);
                     finish();
                 } catch (Exception e) {
